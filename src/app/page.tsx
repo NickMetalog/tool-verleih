@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,7 +11,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const tools = [
@@ -89,7 +89,7 @@ export default function ToolVerleihApp() {
   const [toolSuche, setToolSuche] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alle");
 
-  const handleChange = (key: keyof ToolEintrag, value: any) => {
+  const handleChange = (key: keyof ToolEintrag, value: string | Date | null) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -183,7 +183,7 @@ export default function ToolVerleihApp() {
 
             <div>
               <label className="font-medium">Versanddatum</label>
-              <Calendar mode="single" selected={form.versand} onSelect={(date) => handleChange("versand", date)} weekStartsOn={1} />
+              <DatePicker selected={form.versand} onChange={(date) => handleChange("versand", date)} dateFormat="dd.MM.yyyy" className="w-full p-2 border rounded-md" />
             </div>
 
             <Select onValueChange={(val) => handleChange("versendetVon", val)}>
@@ -199,7 +199,7 @@ export default function ToolVerleihApp() {
 
             <div>
               <label className="font-medium">Geplanter Rückversand</label>
-              <Calendar mode="single" selected={form.rueckversand} onSelect={(date) => handleChange("rueckversand", date)} weekStartsOn={1} />
+              <DatePicker selected={form.rueckversand} onChange={(date) => handleChange("rueckversand", date)} dateFormat="dd.MM.yyyy" className="w-full p-2 border rounded-md" />
             </div>
 
             <Button onClick={speichern}>Speichern</Button>
