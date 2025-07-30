@@ -26,13 +26,15 @@ interface VerleihTabProps {
   onDelete: (id: string) => void; // Callback to delete an entry.
   onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string) => void; // Callback to mark a tool as returned.
   onUpdateComment: (id: string, kommentar: string) => void;
+  onArchive: (id: string) => void;
   availableTools: string[];
   onRevertReturn: (id: string) => void;
   currentUser: string;
 }
 
 // The main component for the tool rental tab.
-export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, availableTools, onRevertReturn, currentUser }: VerleihTabProps) {
+export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, availableTools, onRevertReturn, currentUser }: VerleihTabProps) {
+  const [showArchived, setShowArchived] = useState(false);
   // State for the new rental form.
   const [form, setForm] = useState({
     tool: "",
@@ -117,10 +119,17 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
       {/* Display the list of rental entries if there are any. */}
       {eintraege.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Verliehene Tools</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-semibold">Verliehene Tools</h2>
+            <Button onClick={() => setShowArchived(!showArchived)}>
+              {showArchived ? "Aktive anzeigen" : "Archiv anzeigen"}
+            </Button>
+          </div>
           {/* Container for the list of filtered entries. */}
           <div className="border rounded-md p-4 space-y-4">
-            {eintraege.map((eintrag) => (
+            {eintraege
+              .filter(eintrag => !!eintrag.archived === showArchived)
+              .map((eintrag) => (
               <div key={eintrag.id} className={`border-b pb-2 ${eintrag.zurueckgegeben ? "bg-gray-100" : ""}`}>
                 <p><strong>Tool:</strong> {eintrag.tool}</p>
                 <p><strong>Kunde:</strong> {eintrag.an} ({eintrag.email_kunde})</p>
@@ -162,7 +171,14 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
                   <Button size="sm" onClick={() => onReturn(eintrag.id!, true, currentUser)} className="ml-2 mt-2">Zurückgeben</Button>
                 )}
                 
-                <Button variant="destructive" size="sm" onClick={() => onDelete(eintrag.id!)} className="ml-2 mt-2">Löschen</Button>
+                <Button variant="destructive" size="sm" onClick={() => {
+                  if (window.confirm("Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?")) {
+                    onDelete(eintrag.id!);
+                  }
+                }} className="ml-2 mt-2">Löschen</Button>
+                {!eintrag.archived && (
+                  <Button size="sm" onClick={() => onArchive(eintrag.id!)} className="ml-2 mt-2">Archivieren</Button>
+                )}
               </div>
             ))}
           </div>

@@ -117,6 +117,20 @@ export default function Home() {
     }
   };
 
+  const handleArchive = async (id: string) => {
+    const { error } = await supabase
+      .from("verleih")
+      .update({ archived: true })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error archiving entry:", error);
+      alert(`Error archiving entry: ${error.message}`);
+    } else {
+      fetchEintraege();
+    }
+  };
+
   if (!loggedIn) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -129,6 +143,7 @@ export default function Home() {
         onDelete={handleDelete}
         onReturn={handleReturn}
         onUpdateComment={handleUpdateComment}
+        onArchive={handleArchive}
         availableTools={availableTools}
         onRevertReturn={handleRevertReturn}
         currentUser={currentUser}

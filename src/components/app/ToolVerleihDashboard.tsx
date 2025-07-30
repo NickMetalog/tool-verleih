@@ -8,6 +8,7 @@ import VerleihTab from "./VerleihTab";
 import VerfuegbarkeitTab from "./VerfuegbarkeitTab";
 import KalenderTab from "./KalenderTab";
 import RegalplanTab from "./RegalplanTab";
+import StatistikTab from "./StatistikTab";
 import { ToolEintrag } from "@/../types/types";
 
 // Props interface for the ToolVerleihDashboard component
@@ -17,13 +18,14 @@ interface ToolVerleihDashboardProps {
   onDelete: (id: string) => void; // Function to delete an entry
   onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string) => void; // Function to mark a tool as returned
   onUpdateComment: (id: string, kommentar: string) => void; // Function to update the comment for an entry
+  onArchive: (id: string) => void;
   availableTools: string[]; // An array of available tools
   onRevertReturn: (id: string) => void;
   currentUser: string;
 }
 
 // The main dashboard component for the tool rental application
-export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onReturn, onUpdateComment, availableTools, onRevertReturn, currentUser }: ToolVerleihDashboardProps) {
+export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, availableTools, onRevertReturn, currentUser }: ToolVerleihDashboardProps) {
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold mb-2">Willkommen, {currentUser}!</h1>
@@ -34,11 +36,12 @@ export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onRe
           <TabsTrigger value="verfuegbar">✅ Verfügbarkeit</TabsTrigger>
           <TabsTrigger value="kalender">🗓️ Kalender</TabsTrigger>
           <TabsTrigger value="regal">📦 Regalplan</TabsTrigger>
+          <TabsTrigger value="statistik">📊 Statistik</TabsTrigger>
         </TabsList>
 
         {/* Content for the 'Verleih' (Rental) tab */}
         <TabsContent value="verleih">
-          <VerleihTab eintraege={eintraege} onSave={onSave} onDelete={onDelete} onReturn={onReturn} onUpdateComment={onUpdateComment} availableTools={availableTools} onRevertReturn={onRevertReturn} currentUser={currentUser} />
+          <VerleihTab eintraege={eintraege} onSave={onSave} onDelete={onDelete} onReturn={onReturn} onUpdateComment={onUpdateComment} onArchive={onArchive} availableTools={availableTools} onRevertReturn={onRevertReturn} currentUser={currentUser} />
         </TabsContent>
 
         {/* Content for the 'Verfügbarkeit' (Availability) tab */}
@@ -54,6 +57,11 @@ export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onRe
         {/* Content for the 'Regalplan' (Shelf Plan) tab */}
         <TabsContent value="regal">
           <RegalplanTab />
+        </TabsContent>
+
+        {/* Content for the 'Statistik' (Statistics) tab */}
+        <TabsContent value="statistik">
+          <StatistikTab eintraege={eintraege} />
         </TabsContent>
       </Tabs>
     </div>

@@ -11,4 +11,5 @@ export interface ToolEintrag {
   kontrolliert: boolean;
   kontrolliert_von: string;
   kommentar?: string;
+  archived?: boolean;
 }
