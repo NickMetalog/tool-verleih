@@ -14,13 +14,21 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
     const now = new Date();
     switch (filter) {
       case "30days":
-        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setDate(now.getDate() - 30)));
+        const thirtyDaysAgo = new Date(now);
+        thirtyDaysAgo.setDate(now.getDate() - 30);
+        return eintraege.filter(e => new Date(e.created_at) > thirtyDaysAgo);
       case "3months":
-        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setMonth(now.getMonth() - 3)));
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        return eintraege.filter(e => new Date(e.created_at) > threeMonthsAgo);
       case "360days":
-        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setDate(now.getDate() - 360)));
+        const threeSixtyDaysAgo = new Date(now);
+        threeSixtyDaysAgo.setDate(now.getDate() - 360);
+        return eintraege.filter(e => new Date(e.created_at) > threeSixtyDaysAgo);
       case "yearly":
         return eintraege.filter(e => new Date(e.created_at).getFullYear() === now.getFullYear());
+      case "lastyear":
+        return eintraege.filter(e => new Date(e.created_at).getFullYear() === now.getFullYear() - 1);
       default:
         return eintraege;
     }
@@ -77,6 +85,7 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
             <SelectItem value="3months">Letzte 3 Monate</SelectItem>
             <SelectItem value="360days">Letzte 360 Tage</SelectItem>
             <SelectItem value="yearly">Dieses Jahr</SelectItem>
+            <SelectItem value="lastyear">Letztes Jahr</SelectItem>
           </SelectContent>
         </Select>
       </div>
