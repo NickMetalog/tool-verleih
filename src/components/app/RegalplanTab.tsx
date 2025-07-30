@@ -1,6 +1,10 @@
 export default function RegalplanTab() {
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2">
+        <h2 className="font-bold text-lg">Linkes Regal</h2>
+        <h2 className="font-bold text-lg">Rechtes Regal</h2>
+      </div>
       <div>
         <h3 className="font-semibold mb-1">Oberstes Fach</h3>
         <div className="grid grid-cols-2 gap-2">

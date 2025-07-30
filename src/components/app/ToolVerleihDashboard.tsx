@@ -19,13 +19,14 @@ interface ToolVerleihDashboardProps {
   onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string) => void; // Function to mark a tool as returned
   onUpdateComment: (id: string, kommentar: string) => void; // Function to update the comment for an entry
   onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
   availableTools: string[]; // An array of available tools
   onRevertReturn: (id: string) => void;
   currentUser: string;
 }
 
 // The main dashboard component for the tool rental application
-export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, availableTools, onRevertReturn, currentUser }: ToolVerleihDashboardProps) {
+export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, onUnarchive, availableTools, onRevertReturn, currentUser }: ToolVerleihDashboardProps) {
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-6">
       <h1 className="text-2xl font-bold mb-2">Willkommen, {currentUser}!</h1>
@@ -41,7 +42,7 @@ export default function ToolVerleihDashboard({ eintraege, onSave, onDelete, onRe
 
         {/* Content for the 'Verleih' (Rental) tab */}
         <TabsContent value="verleih">
-          <VerleihTab eintraege={eintraege} onSave={onSave} onDelete={onDelete} onReturn={onReturn} onUpdateComment={onUpdateComment} onArchive={onArchive} availableTools={availableTools} onRevertReturn={onRevertReturn} currentUser={currentUser} />
+          <VerleihTab eintraege={eintraege} onSave={onSave} onDelete={onDelete} onReturn={onReturn} onUpdateComment={onUpdateComment} onArchive={onArchive} onUnarchive={onUnarchive} availableTools={availableTools} onRevertReturn={onRevertReturn} currentUser={currentUser} />
         </TabsContent>
 
         {/* Content for the 'Verfügbarkeit' (Availability) tab */}

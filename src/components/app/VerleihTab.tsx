@@ -27,13 +27,14 @@ interface VerleihTabProps {
   onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string) => void; // Callback to mark a tool as returned.
   onUpdateComment: (id: string, kommentar: string) => void;
   onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
   availableTools: string[];
   onRevertReturn: (id: string) => void;
   currentUser: string;
 }
 
 // The main component for the tool rental tab.
-export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, availableTools, onRevertReturn, currentUser }: VerleihTabProps) {
+export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, onUnarchive, availableTools, onRevertReturn, currentUser }: VerleihTabProps) {
   const [showArchived, setShowArchived] = useState(false);
   // State for the new rental form.
   const [form, setForm] = useState({
@@ -168,7 +169,7 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
                   </div>
                 ) : (
                   // TODO: Replace 'testuser@example.com' with actual user data from an auth hook/session.
-                  <Button size="sm" onClick={() => onReturn(eintrag.id!, true, currentUser)} className="ml-2 mt-2">Zurückgeben</Button>
+                  <Button size="sm" onClick={() => onReturn(eintrag.id!, false, currentUser)} className="ml-2 mt-2">Zurückgeben</Button>
                 )}
                 
                 <Button variant="destructive" size="sm" onClick={() => {
@@ -176,8 +177,10 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
                     onDelete(eintrag.id!);
                   }
                 }} className="ml-2 mt-2">Löschen</Button>
-                {!eintrag.archived && (
-                  <Button size="sm" onClick={() => onArchive(eintrag.id!)} className="ml-2 mt-2">Archivieren</Button>
+                {eintrag.archived ? (
+                  <Button size="sm" onClick={() => onUnarchive(eintrag.id!)} className="ml-2 mt-2">Dearchivieren</Button>
+                ) : (
+                  <Button size="sm" onClick={() => onArchive(eintrag.id!)} className="ml-2 mt-2" disabled={!eintrag.zurueckgegeben}>Archivieren</Button>
                 )}
               </div>
             ))}

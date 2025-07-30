@@ -1,14 +1,36 @@
+import { useState } from "react";
 import { ToolEintrag } from "../../../types/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatistikTabProps {
   eintraege: ToolEintrag[];
 }
 
 export default function StatistikTab({ eintraege }: StatistikTabProps) {
+  const [filter, setFilter] = useState("all");
+
+  const getFilteredEintraege = () => {
+    const now = new Date();
+    switch (filter) {
+      case "30days":
+        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setDate(now.getDate() - 30)));
+      case "3months":
+        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setMonth(now.getMonth() - 3)));
+      case "360days":
+        return eintraege.filter(e => new Date(e.created_at) > new Date(now.setDate(now.getDate() - 360)));
+      case "yearly":
+        return eintraege.filter(e => new Date(e.created_at).getFullYear() === now.getFullYear());
+      default:
+        return eintraege;
+    }
+  };
+
+  const filteredEintraege = getFilteredEintraege();
+
   const getRentalFrequency = () => {
     const frequency: { [key: string]: number } = {};
-    eintraege.forEach(eintrag => {
+    filteredEintraege.forEach(eintrag => {
       if (frequency[eintrag.tool]) {
         frequency[eintrag.tool]++;
       } else {
@@ -20,7 +42,7 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
 
   const getAverageRentalDuration = () => {
     const durations: { [key: string]: number[] } = {};
-    eintraege.forEach(eintrag => {
+    filteredEintraege.forEach(eintrag => {
       const versand = new Date(eintrag.versand);
       const rueckversand = new Date(eintrag.rueckversand);
       const duration = (rueckversand.getTime() - versand.getTime()) / (1000 * 3600 * 24);
@@ -44,6 +66,20 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Select onValueChange={setFilter} defaultValue="all">
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Gesamt</SelectItem>
+            <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+            <SelectItem value="3months">Letzte 3 Monate</SelectItem>
+            <SelectItem value="360days">Letzte 360 Tage</SelectItem>
+            <SelectItem value="yearly">Dieses Jahr</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Miethäufigkeit</CardTitle>

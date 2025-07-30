@@ -131,6 +131,20 @@ export default function Home() {
     }
   };
 
+  const handleUnarchive = async (id: string) => {
+    const { error } = await supabase
+      .from("verleih")
+      .update({ archived: false })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error unarchiving entry:", error);
+      alert(`Error unarchiving entry: ${error.message}`);
+    } else {
+      fetchEintraege();
+    }
+  };
+
   if (!loggedIn) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -144,6 +158,7 @@ export default function Home() {
         onReturn={handleReturn}
         onUpdateComment={handleUpdateComment}
         onArchive={handleArchive}
+        onUnarchive={handleUnarchive}
         availableTools={availableTools}
         onRevertReturn={handleRevertReturn}
         currentUser={currentUser}
