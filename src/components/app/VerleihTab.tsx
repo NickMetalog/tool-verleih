@@ -15,8 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ToolEintrag } from "@/../types/types";
-import { tools, mitarbeiter } from "@/lib/data";
+import { ToolEintrag } from "../../../types/types";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
