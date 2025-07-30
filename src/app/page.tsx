@@ -20,7 +20,7 @@ export default function Home() {
   }, [loggedIn]);
 
   const handleLogin = (user: string, pass: string) => {
-    if (pass === "1234") {
+    if (pass === process.env.NEXT_PUBLIC_APP_PASSWORD) {
       setLoggedIn(true);
       setCurrentUser(user);
     } else {
