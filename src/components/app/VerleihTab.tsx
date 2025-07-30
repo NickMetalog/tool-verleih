@@ -24,18 +24,24 @@ interface VerleihTabProps {
   eintraege: ToolEintrag[]; // Array of tool rental entries.
   onSave: (form: Omit<ToolEintrag, "id" | "created_at">) => void; // Callback to save a new entry.
   onDelete: (id: string) => void; // Callback to delete an entry.
-  onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string) => void; // Callback to mark a tool as returned.
+  onReturn: (id: string, kontrolliert: boolean, kontrolliert_von: string, tatsaechliches_rueckgabedatum?: string) => void; // Callback to mark a tool as returned.
   onUpdateComment: (id: string, kommentar: string) => void;
   onArchive: (id: string) => void;
   onUnarchive: (id: string) => void;
   availableTools: string[];
   onRevertReturn: (id: string) => void;
   currentUser: string;
+  onUpdateRueckversand: (id: string, newDate: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  sortOrder: boolean;
+  setSortOrder: (sortOrder: boolean) => void;
 }
 
 // The main component for the tool rental tab.
-export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, onUnarchive, availableTools, onRevertReturn, currentUser }: VerleihTabProps) {
+export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, onUnarchive, availableTools, onRevertReturn, currentUser, onUpdateRueckversand, sortBy, setSortBy, sortOrder, setSortOrder }: VerleihTabProps) {
   const [showArchived, setShowArchived] = useState(false);
+  const [editingRueckversandId, setEditingRueckversandId] = useState<string | null>(null);
   // State for the new rental form.
   const [form, setForm] = useState({
     tool: "",
@@ -76,6 +82,25 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
       rueckversand: new Date(),
       kommentar: "",
     });
+  };
+
+  const isOverdue = (eintrag: ToolEintrag) => {
+    if (eintrag.zurueckgegeben) {
+      return null; // Not overdue if already returned
+    }
+    const plannedReturnDate = new Date(eintrag.rueckversand);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date to compare
+
+    const diffTime = today.getTime() - plannedReturnDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 0 && diffDays <= 7) {
+      return "overdue-week"; // Overdue by up to one week
+    } else if (diffDays > 7) {
+      return "overdue-long"; // Overdue by more than one week
+    }
+    return null; // Not overdue
   };
 
   return (
@@ -122,68 +147,121 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
         <div className="mt-6">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold">Verliehene Tools</h2>
-            <Button onClick={() => setShowArchived(!showArchived)}>
-              {showArchived ? "Aktive anzeigen" : "Archiv anzeigen"}
-            </Button>
+            <div className="flex space-x-2">
+              <Select onValueChange={setSortBy} defaultValue={sortBy}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sortieren nach" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Erstellungsdatum</SelectItem>
+                  <SelectItem value="zurueckgegeben">Status</SelectItem>
+                  <SelectItem value="rueckversand">Rückversanddatum</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select onValueChange={(value) => setSortOrder(value === "asc")} defaultValue={sortOrder ? "asc" : "desc"}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Reihenfolge" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">Aufsteigend</SelectItem>
+                  <SelectItem value="desc">Absteigend</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => setShowArchived(!showArchived)}>
+                {showArchived ? "Aktive anzeigen" : "Archiv anzeigen"}
+              </Button>
+            </div>
           </div>
           {/* Container for the list of filtered entries. */}
           <div className="border rounded-md p-4 space-y-4">
             {eintraege
               .filter(eintrag => !!eintrag.archived === showArchived)
-              .map((eintrag) => (
-              <div key={eintrag.id} className={`border-b pb-2 ${eintrag.zurueckgegeben ? "bg-gray-100" : ""}`}>
-                <p><strong>Tool:</strong> {eintrag.tool}</p>
-                <p><strong>Kunde:</strong> {eintrag.an} ({eintrag.email_kunde})</p>
-                <p><strong>Versendet:</strong> {new Date(eintrag.versand).toLocaleDateString()} von {eintrag.von}</p>
-                <p><strong>Geplanter Rückversand:</strong> {new Date(eintrag.rueckversand).toLocaleDateString()}</p>
-                <Textarea
-                  placeholder="Kommentar bearbeiten..."
-                  defaultValue={eintrag.kommentar}
-                  onBlur={(e) => onUpdateComment(eintrag.id!, e.target.value)}
-                  className="mt-2"
-                />
-                <div className="flex items-center space-x-2 mt-2">
-                  <Input
-                    type="checkbox"
-                    checked={eintrag.kontrolliert}
-                    // The checkbox is disabled if the item has not been returned.
-                    // A returned item is checked by default, but can be unchecked.
-                    disabled={!eintrag.zurueckgegeben}
-                    onChange={(e) => {
-                      // When the checkbox is changed for a returned item,
-                      // call the onReturn function to update the 'kontrolliert' status.
-                      // We pass the existing 'kontrolliert_von' value, or a placeholder.
-                      onReturn(eintrag.id!, e.target.checked, eintrag.kontrolliert_von || currentUser);
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <label>Kontrolliert</label>
-                </div>
-                
-                {eintrag.zurueckgegeben ? (
-                  <div>
-                    <p className="text-green-600 font-semibold mt-2">
-                      Zurückgegeben (Kontrolliert von: {eintrag.kontrolliert_von || 'N/A'})
-                    </p>
-                    <Button size="sm" onClick={() => onRevertReturn(eintrag.id!)} className="ml-2 mt-2">Erneut Verleihen</Button>
+              .map((eintrag) => {
+                const overdueStatus = isOverdue(eintrag);
+                const itemClasses = `border-b pb-2 ${eintrag.zurueckgegeben ? "bg-gray-100" : ""} ${overdueStatus === "overdue-week" ? "bg-yellow-100 border-yellow-400" : ""} ${overdueStatus === "overdue-long" ? "bg-red-100 border-red-400" : ""}`;
+
+                return (
+                  <div key={eintrag.id} className={itemClasses}>
+                    <p><strong>Tool:</strong> {eintrag.tool}</p>
+                    <p><strong>Kunde:</strong> {eintrag.an} ({eintrag.email_kunde})</p>
+                    <p><strong>Versendet:</strong> {new Date(eintrag.versand).toLocaleDateString()} von {eintrag.von}</p>
+                    <div>
+                      <strong>Geplanter Rückversand:</strong>{" "}
+                      {editingRueckversandId === eintrag.id ? (
+                        <DatePicker
+                          selected={new Date(eintrag.rueckversand)}
+                          onChange={(date) => {
+                            if (date) {
+                              onUpdateRueckversand(eintrag.id!, date.toISOString());
+                              setEditingRueckversandId(null); // Close date picker after selection
+                            }
+                          }}
+                          onBlur={() => setEditingRueckversandId(null)} // Close on blur
+                          dateFormat="dd.MM.yyyy"
+                          className="w-full p-2 border rounded-md"
+                          autoFocus // Focus the date picker when it opens
+                        />
+                      ) : (
+                        <span
+                          onClick={() => setEditingRueckversandId(eintrag.id!)}
+                          className="cursor-pointer text-blue-600 hover:underline"
+                        >
+                          {new Date(eintrag.rueckversand).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    {eintrag.zurueckgegeben && eintrag.tatsaechliches_rueckgabedatum && (
+                      <p><strong>Zurück am:</strong> {new Date(eintrag.tatsaechliches_rueckgabedatum).toLocaleDateString()}</p>
+                    )}
+                    <Textarea
+                      placeholder="Kommentar bearbeiten..."
+                      defaultValue={eintrag.kommentar}
+                      onBlur={(e) => onUpdateComment(eintrag.id!, e.target.value)}
+                      className="mt-2"
+                    />
+                    <div className="flex items-center space-x-2 mt-2">
+                      <Input
+                        type="checkbox"
+                        checked={eintrag.kontrolliert}
+                        // The checkbox is disabled if the item has not been returned.
+                        // A returned item is checked by default, but can be unchecked.
+                        disabled={!eintrag.zurueckgegeben}
+                        onChange={(e) => {
+                          // When the checkbox is changed for a returned item,
+                          // call the onReturn function to update the 'kontrolliert' status.
+                          // We pass the existing 'kontrolliert_von' value, or a placeholder.
+                          onReturn(eintrag.id!, e.target.checked, eintrag.kontrolliert_von || currentUser);
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <label>Kontrolliert</label>
+                    </div>
+                    
+                    {eintrag.zurueckgegeben ? (
+                      <div>
+                        <p className="text-green-600 font-semibold mt-2">
+                          Zurückgegeben von: {eintrag.kontrolliert_von || 'N/A'}
+                        </p>
+                        <Button size="sm" onClick={() => onRevertReturn(eintrag.id!)} className="ml-2 mt-2">Erneut Verleihen</Button>
+                      </div>
+                    ) : (
+                      // TODO: Replace 'testuser@example.com' with actual user data from an auth hook/session.
+                      <Button size="sm" onClick={() => onReturn(eintrag.id!, false, currentUser, new Date().toISOString())} className="ml-2 mt-2">Zurückgeben</Button>
+                    )}
+                    
+                    <Button variant="destructive" size="sm" onClick={() => {
+                      if (window.confirm("Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?")) {
+                        onDelete(eintrag.id!);
+                      }
+                    }} className="ml-2 mt-2">Löschen</Button>
+                    {eintrag.archived ? (
+                      <Button size="sm" onClick={() => onUnarchive(eintrag.id!)} className="ml-2 mt-2">Dearchivieren</Button>
+                    ) : (
+                      <Button size="sm" onClick={() => onArchive(eintrag.id!)} className="ml-2 mt-2" disabled={!eintrag.zurueckgegeben}>Archivieren</Button>
+                    )}
                   </div>
-                ) : (
-                  // TODO: Replace 'testuser@example.com' with actual user data from an auth hook/session.
-                  <Button size="sm" onClick={() => onReturn(eintrag.id!, false, currentUser)} className="ml-2 mt-2">Zurückgeben</Button>
-                )}
-                
-                <Button variant="destructive" size="sm" onClick={() => {
-                  if (window.confirm("Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?")) {
-                    onDelete(eintrag.id!);
-                  }
-                }} className="ml-2 mt-2">Löschen</Button>
-                {eintrag.archived ? (
-                  <Button size="sm" onClick={() => onUnarchive(eintrag.id!)} className="ml-2 mt-2">Dearchivieren</Button>
-                ) : (
-                  <Button size="sm" onClick={() => onArchive(eintrag.id!)} className="ml-2 mt-2" disabled={!eintrag.zurueckgegeben}>Archivieren</Button>
-                )}
-              </div>
-            ))}
+                );
+              })}
           </div>
         </div>
       )}

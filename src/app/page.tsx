@@ -12,12 +12,14 @@ export default function Home() {
   const [availableTools, setAvailableTools] = useState<string[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState("");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<boolean>(false); // true for ascending, false for descending
 
   useEffect(() => {
     if (loggedIn) {
       fetchEintraege();
     }
-  }, [loggedIn]);
+  }, [loggedIn, sortBy, sortOrder]);
 
   const handleLogin = (user: string, pass: string) => {
     if (pass === process.env.NEXT_PUBLIC_APP_PASSWORD) {
@@ -29,7 +31,29 @@ export default function Home() {
   };
 
   const fetchEintraege = async () => {
-    const { data, error } = await supabase.from("verleih").select("*");
+    let query = supabase.from("verleih").select("*");
+
+    // Apply sorting based on state
+    if (sortBy === "created_at") {
+      query = query.order("created_at", { ascending: sortOrder });
+    } else if (sortBy === "zurueckgegeben") {
+      query = query.order("zurueckgegeben", { ascending: sortOrder });
+    } else if (sortBy === "rueckversand") {
+      query = query.order("rueckversand", { ascending: sortOrder });
+    }
+    // Always apply secondary sorting for consistency if primary sort is not unique
+    if (sortBy !== "created_at") {
+      query = query.order("created_at", { ascending: false });
+    }
+    if (sortBy !== "zurueckgegeben") {
+      query = query.order("zurueckgegeben", { ascending: true });
+    }
+    if (sortBy !== "rueckversand") {
+      query = query.order("rueckversand", { ascending: true });
+    }
+
+    const { data, error } = await query;
+
     if (error) {
       console.error("Error fetching entries:", error);
     } else {
@@ -67,17 +91,22 @@ export default function Home() {
     }
   };
 
-  const handleReturn = async (id: string, kontrolliert: boolean, kontrolliert_von: string) => {
+  const handleReturn = async (id: string, kontrolliert: boolean, kontrolliert_von: string, tatsaechliches_rueckgabedatum?: string) => {
     const originalEintraege = [...eintraege];
     const updatedEintraege = eintraege.map((e) =>
-      e.id === id ? { ...e, zurueckgegeben: true, kontrolliert, kontrolliert_von } : e
+      e.id === id ? { ...e, zurueckgegeben: true, kontrolliert, kontrolliert_von, tatsaechliches_rueckgabedatum } : e
     );
 
     setEintraege(updatedEintraege);
 
+    const updateData: any = { zurueckgegeben: true, kontrolliert, kontrolliert_von };
+    if (tatsaechliches_rueckgabedatum) {
+      updateData.tatsaechliches_rueckgabedatum = tatsaechliches_rueckgabedatum;
+    }
+
     const { error } = await supabase
       .from("verleih")
-      .update({ zurueckgegeben: true, kontrolliert, kontrolliert_von })
+      .update(updateData)
       .eq("id", id);
 
     if (error) {
@@ -92,7 +121,7 @@ export default function Home() {
   const handleRevertReturn = async (id: string) => {
     const { error } = await supabase
       .from("verleih")
-      .update({ zurueckgegeben: false })
+      .update({ zurueckgegeben: false, tatsaechliches_rueckgabedatum: null })
       .eq("id", id);
 
     if (error) {
@@ -145,6 +174,20 @@ export default function Home() {
     }
   };
 
+  const handleUpdateRueckversand = async (id: string, newDate: string) => {
+    const { error } = await supabase
+      .from("verleih")
+      .update({ rueckversand: newDate })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating planned return date:", error);
+      alert(`Error updating planned return date: ${error.message}`);
+    } else {
+      fetchEintraege();
+    }
+  };
+
   if (!loggedIn) {
     return <LoginPage onLogin={handleLogin} />;
   }
@@ -162,6 +205,11 @@ export default function Home() {
         availableTools={availableTools}
         onRevertReturn={handleRevertReturn}
         currentUser={currentUser}
+        onUpdateRueckversand={handleUpdateRueckversand}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
       />
     </main>
   );

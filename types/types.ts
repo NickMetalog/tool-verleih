@@ -12,4 +12,5 @@ export interface ToolEintrag {
   kontrolliert_von: string;
   kommentar?: string;
   archived?: boolean;
+  tatsaechliches_rueckgabedatum?: string;
 }

@@ -12,26 +12,41 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
 
   const getFilteredEintraege = () => {
     const now = new Date();
+    let startDate: Date;
+
     switch (filter) {
       case "30days":
-        const thirtyDaysAgo = new Date(now);
-        thirtyDaysAgo.setDate(now.getDate() - 30);
-        return eintraege.filter(e => new Date(e.created_at) > thirtyDaysAgo);
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 30);
+        break;
       case "3months":
-        const threeMonthsAgo = new Date(now);
-        threeMonthsAgo.setMonth(now.getMonth() - 3);
-        return eintraege.filter(e => new Date(e.created_at) > threeMonthsAgo);
+        startDate = new Date(now);
+        startDate.setMonth(now.getMonth() - 3);
+        break;
       case "360days":
-        const threeSixtyDaysAgo = new Date(now);
-        threeSixtyDaysAgo.setDate(now.getDate() - 360);
-        return eintraege.filter(e => new Date(e.created_at) > threeSixtyDaysAgo);
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 360);
+        break;
       case "yearly":
-        return eintraege.filter(e => new Date(e.created_at).getFullYear() === now.getFullYear());
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
       case "lastyear":
-        return eintraege.filter(e => new Date(e.created_at).getFullYear() === now.getFullYear() - 1);
+        startDate = new Date(now.getFullYear() - 1, 0, 1);
+        const endDate = new Date(now.getFullYear() - 1, 11, 31);
+        return eintraege.filter(e => {
+          const versand = new Date(e.versand);
+          const rueckversand = e.rueckversand ? new Date(e.rueckversand) : now;
+          return versand <= endDate && rueckversand >= startDate;
+        });
       default:
         return eintraege;
     }
+
+    return eintraege.filter(e => {
+      const versand = new Date(e.versand);
+      const rueckversand = e.rueckversand ? new Date(e.rueckversand) : now;
+      return rueckversand >= startDate;
+    });
   };
 
   const filteredEintraege = getFilteredEintraege();
@@ -52,12 +67,15 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
     const durations: { [key: string]: number[] } = {};
     filteredEintraege.forEach(eintrag => {
       const versand = new Date(eintrag.versand);
-      const rueckversand = new Date(eintrag.rueckversand);
-      const duration = (rueckversand.getTime() - versand.getTime()) / (1000 * 3600 * 24);
-      if (durations[eintrag.tool]) {
-        durations[eintrag.tool].push(duration);
-      } else {
-        durations[eintrag.tool] = [duration];
+      const actualRueckversand = eintrag.tatsaechliches_rueckgabedatum ? new Date(eintrag.tatsaechliches_rueckgabedatum) : (eintrag.rueckversand ? new Date(eintrag.rueckversand) : null);
+
+      if (actualRueckversand) {
+        const duration = (actualRueckversand.getTime() - versand.getTime()) / (1000 * 3600 * 24);
+        if (durations[eintrag.tool]) {
+          durations[eintrag.tool].push(duration);
+        } else {
+          durations[eintrag.tool] = [duration];
+        }
       }
     });
 
