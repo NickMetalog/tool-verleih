@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ToolVerleihDashboard from "@/components/app/ToolVerleihDashboard";
 import LoginPage from "@/components/app/LoginPage";
 import { supabase } from "@/lib/supabaseClient";
@@ -19,7 +19,7 @@ export default function Home() {
     if (loggedIn) {
       fetchEintraege();
     }
-  }, [loggedIn, sortBy, sortOrder]);
+  }, [loggedIn, sortBy, sortOrder, fetchEintraege]);
 
   const handleLogin = (user: string, pass: string) => {
     if (pass === process.env.NEXT_PUBLIC_APP_PASSWORD) {
@@ -30,7 +30,7 @@ export default function Home() {
     }
   };
 
-  const fetchEintraege = async () => {
+  const fetchEintraege = useCallback(async () => {
     let query = supabase.from("verleih").select("*");
 
     // Apply sorting based on state
@@ -64,7 +64,7 @@ export default function Home() {
       setAvailableTools(available);
       setEintraege(data as ToolEintrag[]);
     }
-  };
+  }, [sortBy, sortOrder]); // Add sortBy and sortOrder as dependencies for useCallback
 
   const handleSave = async (form: Omit<ToolEintrag, "id" | "created_at">) => {
     const { error } = await supabase.from("verleih").insert([form]);
@@ -99,9 +99,11 @@ export default function Home() {
 
     setEintraege(updatedEintraege);
 
-    const updateData: any = { zurueckgegeben: true, kontrolliert, kontrolliert_von };
+    const updateData: { zurueckgegeben: boolean; kontrolliert: boolean; kontrolliert_von: string; tatsaechliches_rueckgabedatum?: string | null } = { zurueckgegeben: true, kontrolliert, kontrolliert_von };
     if (tatsaechliches_rueckgabedatum) {
       updateData.tatsaechliches_rueckgabedatum = tatsaechliches_rueckgabedatum;
+    } else {
+      updateData.tatsaechliches_rueckgabedatum = null; // Ensure it's explicitly null if not provided
     }
 
     const { error } = await supabase
