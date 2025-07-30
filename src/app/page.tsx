@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import ToolVerleihDashboard from "@/components/app/ToolVerleihDashboard";
 import LoginPage from "@/components/app/LoginPage";
 import { supabase } from "@/lib/supabaseClient";
-import { ToolEintrag } from "@/../types/types";
+import { ToolEintrag } from "../../types/types";
 import { tools } from "@/lib/data";
 
 export default function Home() {
