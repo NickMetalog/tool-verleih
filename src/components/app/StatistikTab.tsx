@@ -66,10 +66,10 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
   const getAverageRentalDuration = () => {
     const durations: { [key: string]: number[] } = {};
     filteredEintraege.forEach(eintrag => {
-      const versand = new Date(eintrag.versand);
       const actualRueckversand = eintrag.tatsaechliches_rueckgabedatum ? new Date(eintrag.tatsaechliches_rueckgabedatum) : (eintrag.rueckversand ? new Date(eintrag.rueckversand) : null);
 
       if (actualRueckversand) {
+        const versand = new Date(eintrag.versand); // Move declaration inside the if block
         const duration = (actualRueckversand.getTime() - versand.getTime()) / (1000 * 3600 * 24);
         if (durations[eintrag.tool]) {
           durations[eintrag.tool].push(duration);
