@@ -69,9 +69,7 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
       const actualRueckversand = eintrag.tatsaechliches_rueckgabedatum ? new Date(eintrag.tatsaechliches_rueckgabedatum) : (eintrag.rueckversand ? new Date(eintrag.rueckversand) : null);
 
       if (actualRueckversand) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const versand = new Date(eintrag.versand);
-        const duration = (actualRueckversand.getTime() - versand.getTime()) / (1000 * 3600 * 24);
+        const duration = (actualRueckversand.getTime() - new Date(eintrag.versand).getTime()) / (1000 * 3600 * 24);
         if (durations[eintrag.tool]) {
           durations[eintrag.tool].push(duration);
         } else {
