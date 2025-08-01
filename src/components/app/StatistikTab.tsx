@@ -43,7 +43,6 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
     }
 
     return eintraege.filter(e => {
-      const versand = new Date(e.versand);
       const rueckversand = e.rueckversand ? new Date(e.rueckversand) : now;
       return rueckversand >= startDate;
     });
