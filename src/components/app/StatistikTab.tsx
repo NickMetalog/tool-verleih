@@ -34,6 +34,7 @@ export default function StatistikTab({ eintraege }: StatistikTabProps) {
         startDate = new Date(now.getFullYear() - 1, 0, 1);
         const endDate = new Date(now.getFullYear() - 1, 11, 31);
         return eintraege.filter(e => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const versand = new Date(e.versand);
           const rueckversand = e.rueckversand ? new Date(e.rueckversand) : now;
           return versand <= endDate && rueckversand >= startDate;
