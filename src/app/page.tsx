@@ -15,21 +15,6 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<boolean>(false); // true for ascending, false for descending
 
-  useEffect(() => {
-    if (loggedIn) {
-      fetchEintraege();
-    }
-  }, [loggedIn, sortBy, sortOrder, fetchEintraege]);
-
-  const handleLogin = (user: string, pass: string) => {
-    if (pass === process.env.NEXT_PUBLIC_APP_PASSWORD) {
-      setLoggedIn(true);
-      setCurrentUser(user);
-    } else {
-      alert("Falsches Passwort");
-    }
-  };
-
   const fetchEintraege = useCallback(async () => {
     let query = supabase.from("verleih").select("*");
 
@@ -65,6 +50,21 @@ export default function Home() {
       setEintraege(data as ToolEintrag[]);
     }
   }, [sortBy, sortOrder]); // Add sortBy and sortOrder as dependencies for useCallback
+
+  useEffect(() => {
+    if (loggedIn) {
+      fetchEintraege();
+    }
+  }, [loggedIn, sortBy, sortOrder, fetchEintraege]);
+
+  const handleLogin = (user: string, pass: string) => {
+    if (pass === process.env.NEXT_PUBLIC_APP_PASSWORD) {
+      setLoggedIn(true);
+      setCurrentUser(user);
+    } else {
+      alert("Falsches Passwort");
+    }
+  };
 
   const handleSave = async (form: Omit<ToolEintrag, "id" | "created_at">) => {
     const { error } = await supabase.from("verleih").insert([form]);
