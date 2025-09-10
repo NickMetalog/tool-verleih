@@ -42,6 +42,7 @@ interface VerleihTabProps {
 export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUpdateComment, onArchive, onUnarchive, availableTools, onRevertReturn, currentUser, onUpdateRueckversand, sortBy, setSortBy, sortOrder, setSortOrder }: VerleihTabProps) {
   const [showArchived, setShowArchived] = useState(false);
   const [editingRueckversandId, setEditingRueckversandId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState(""); // New state for search term
   // State for the new rental form.
   const [form, setForm] = useState({
     tool: "",
@@ -147,7 +148,13 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
         <div className="mt-6">
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-semibold">Verliehene Tools</h2>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Suche nach Tool oder Kunde..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-[250px]"
+              />
               <Select onValueChange={setSortBy} defaultValue={sortBy}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Sortieren nach" />
@@ -176,6 +183,13 @@ export default function VerleihTab({ eintraege, onSave, onDelete, onReturn, onUp
           <div className="border rounded-md p-4 space-y-4">
             {eintraege
               .filter(eintrag => !!eintrag.archived === showArchived)
+              .filter(eintrag => {
+                const lowerCaseSearchTerm = searchTerm.toLowerCase();
+                return (
+                  eintrag.tool.toLowerCase().includes(lowerCaseSearchTerm) ||
+                  eintrag.an.toLowerCase().includes(lowerCaseSearchTerm)
+                );
+              })
               .map((eintrag) => {
                 const overdueStatus = isOverdue(eintrag);
                 const itemClasses = `border-b pb-2 ${eintrag.zurueckgegeben ? "bg-gray-100" : ""} ${overdueStatus === "overdue-week" ? "bg-yellow-100 border-yellow-400" : ""} ${overdueStatus === "overdue-long" ? "bg-red-100 border-red-400" : ""}`;
